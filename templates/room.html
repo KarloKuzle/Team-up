@@ -1,0 +1,128 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="chat-container">
+    <div class="chat-header">
+        <h2>Room: {{code}}</h2>
+        <a href="/" class="leave-btn">Leave Room</a>
+    </div>
+    
+    <div class="message-box">
+        <div class="messages" id="messages">
+            {% for msg in messages %}
+                {% if msg.get('is_notification') %}
+                    <div class="notification">
+                        <span class="notification-text">{{msg.name}} {{msg.message}}</span>
+                        <span class="timestamp">{{msg.timestamp}}</span>
+                    </div>
+                {% else %}
+                    <div class="message" data-sender="{{msg.name}}">
+                        <div class="message-bubble">
+                            <div class="message-header">
+                                <span class="sender-name">{{msg.name}}</span>
+                                <span class="timestamp">{{msg.timestamp}}</span>
+                            </div>
+                            <div class="message-content">{{msg.message}}</div>
+                        </div>
+                    </div>
+                {% endif %}
+            {% endfor %}
+        </div>
+        
+        <div class="input-container">
+            <div class="message-input-group">
+                <input 
+                    type="text" 
+                    id="message" 
+                    placeholder="Type your message..."
+                    autocomplete="off"
+                />
+                <button type="button" id="send-btn" class="send-btn">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M22 2L11 13" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                        <path d="M22 2L15 22L11 13L2 9L22 2Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                    </svg>
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    var socketio = io();
+    
+    const messages = document.getElementById("messages");
+    const messageInput = document.getElementById("message");
+    const sendBtn = document.getElementById("send-btn");
+    const currentUser = "{{ session.name }}";
+    
+    // Create message element
+    const createMessage = (name, message, timestamp, isNotification = false) => {
+        const messageDiv = document.createElement("div");
+        
+        if (isNotification) {
+            messageDiv.className = "notification";
+            messageDiv.innerHTML = `
+                <span class="notification-text">${name} ${message}</span>
+                <span class="timestamp">${timestamp}</span>
+            `;
+        } else {
+            const isOwnMessage = name === currentUser;
+            messageDiv.className = `message ${isOwnMessage ? 'own-message' : 'other-message'}`;
+            messageDiv.innerHTML = `
+                <div class="message-bubble">
+                    <div class="message-header">
+                        <span class="sender-name">${name}</span>
+                        <span class="timestamp">${timestamp}</span>
+                    </div>
+                    <div class="message-content">${message}</div>
+                </div>
+            `;
+        }
+        
+        messages.appendChild(messageDiv);
+        messages.scrollTop = messages.scrollHeight;
+    };
+    
+    // Send message
+    const sendMessage = () => {
+        const message = messageInput.value.trim();
+        if (message === "") return;
+        
+        socketio.emit("message", {"data": message});
+        messageInput.value = "";
+    };
+    
+    // Send message on button click
+    sendBtn.onclick = sendMessage;
+    
+    // Send message on Enter key press
+    messageInput.addEventListener("keypress", function(e) {
+        if (e.key === "Enter") {
+            sendMessage();
+        }
+    });
+    
+    // Receive messages
+    socketio.on("message", (data) => {
+        createMessage(data.name, data.message, data.timestamp, data.is_notification);
+    });
+    
+    // Auto-scroll to bottom on page load and apply message styling
+    document.addEventListener("DOMContentLoaded", function() {
+        const existingMessages = document.querySelectorAll('.message[data-sender]');
+        existingMessages.forEach(msg => {
+            const sender = msg.getAttribute('data-sender');
+            if (sender === currentUser) {
+                msg.classList.add('own-message');
+            } else {
+                msg.classList.add('other-message');
+            }
+        });
+        messages.scrollTop = messages.scrollHeight;
+    });
+    
+    // Focus on input field
+    messageInput.focus();
+</script>
+{% endblock %}

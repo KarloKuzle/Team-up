@@ -1,0 +1,72 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container">
+    <div class="form-card">
+        <h2>Chat Rooms</h2>
+        <p class="subtitle">Connect with others using phone numbers as room codes</p>
+        
+        <form method="POST" class="chat-form">
+            <div class="input-group">
+                <label for="name">Your Name</label>
+                <input 
+                    type="text"
+                    id="name"
+                    placeholder="Enter your name" 
+                    name="name" 
+                    value="{{name or ''}}"
+                    required
+                />
+            </div>
+            
+            <div class="input-group">
+                <label for="phone">Your Phone Number</label>
+                <input 
+                    type="text"
+                    id="phone"
+                    placeholder="Your phone number" 
+                    name="phone" 
+                    value="{{phone or ''}}"
+                    required
+                />
+                <small class="help-text">This will be your room code when creating a room</small>
+            </div>
+            
+            <div class="input-group">
+                <label for="join_phone">Join Room (Phone Number)</label>
+                <input 
+                    type="text"
+                    id="join_phone"
+                    placeholder="Enter someone's phone number to join their room" 
+                    name="join_phone" 
+                    value="{{join_phone or ''}}"
+                />
+                <small class="help-text">Only required when joining a room</small>
+            </div>
+            
+            <div class="button-group">
+                <button type="submit" name="create" class="btn btn-create">
+                    Create Room
+                </button>
+                <button type="submit" name="join" class="btn btn-join">
+                    Join Room
+                </button>
+            </div>
+            
+            {% if error %}
+                <div class="error-message">
+                    {{error}}
+                </div>
+            {% endif %}
+        </form>
+        
+        <div class="info-box">
+            <h4>How it works:</h4>
+            <ul>
+                <li><strong>Create Room:</strong> Use your phone number as the room code</li>
+                <li><strong>Join Room:</strong> Enter someone else's phone number to join their room</li>
+            </ul>
+        </div>
+    </div>
+</div>
+{% endblock %}
